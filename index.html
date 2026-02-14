@@ -13,110 +13,162 @@
         <p class="wasm-size"></p>
     </header>
 
-    <section id="pipeline">
-        <div class="pipeline-node" id="node-webcam">
-            <div class="node-icon">📷</div>
-            <div class="node-label">Webcam</div>
-            <div class="node-stat" id="stat-webcam">—</div>
+    <section class="tv-setup">
+        <div class="tv" id="tv-input">
+            <div class="tv-body">
+                <div class="tv-bezel">
+                    <div class="tv-screen" id="screen-input">
+                        <canvas class="static-canvas" id="static-input" width="80" height="60"></canvas>
+                        <video id="webcam" autoplay muted playsinline></video>
+                        <div class="warmup-line"></div>
+                        <div class="screen-osd visible" id="input-osd">PRESS &#x23FB; TO START</div>
+                    </div>
+                </div>
+                <div class="tv-chrome">
+                    <div class="tv-badge">
+                        <span class="badge-dot" style="background:#e53935"></span>
+                        <span class="badge-dot" style="background:#43a047"></span>
+                        <span class="badge-dot" style="background:#1e88e5"></span>
+                        <span class="badge-dot" style="background:#fdd835"></span>
+                        <span class="badge-name">INPUT</span>
+                    </div>
+                    <button class="power-btn" id="btn-power" title="Power On">
+                        <span class="power-ring"></span>
+                        <span class="power-symbol">&#x23FB;</span>
+                    </button>
+                </div>
+            </div>
+            <div class="tv-stand">
+                <div class="foot"></div>
+                <div class="foot"></div>
+            </div>
         </div>
-        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
-        <div class="pipeline-node" id="node-yuv">
-            <div class="node-icon">🎨</div>
-            <div class="node-label">RGB → YUV420</div>
-            <div class="node-stat" id="stat-yuv">—</div>
+
+        <div class="encoder-unit">
+            <div class="cable cable-left"></div>
+            <div class="encoder-box">
+                <div class="encoder-top">
+                    <span class="encoder-brand">wav1c</span>
+                    <span class="encoder-model">AV1 ENCODER</span>
+                </div>
+                <div class="encoder-leds">
+                    <div class="led-group">
+                        <div class="led" id="led-power"></div>
+                        <span>PWR</span>
+                    </div>
+                    <div class="led-group">
+                        <div class="led" id="led-encode"></div>
+                        <span>ENC</span>
+                    </div>
+                    <div class="led-group">
+                        <div class="led" id="led-key"></div>
+                        <span>KEY</span>
+                    </div>
+                </div>
+                <div class="encoder-controls">
+                    <div class="ctrl">
+                        <label for="qp-slider">QP <span id="qp-value">128</span></label>
+                        <input type="range" id="qp-slider" min="0" max="255" value="128">
+                    </div>
+                    <div class="ctrl">
+                        <label for="keyint-select">KEYINT</label>
+                        <select id="keyint-select">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="30">30</option>
+                            <option value="60">60</option>
+                        </select>
+                    </div>
+                    <div class="ctrl">
+                        <label for="res-select">RES</label>
+                        <select id="res-select">
+                            <option value="320x240" selected>320×240</option>
+                            <option value="640x480">640×480</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="encoder-actions">
+                    <button id="btn-record" disabled>&#x25CF; REC</button>
+                    <button id="btn-stop" disabled>&#x25A0; STOP</button>
+                    <a id="btn-download" class="btn-dl" style="display:none">&#x2B07; SAVE MP4</a>
+                </div>
+            </div>
+            <div class="cable cable-right"></div>
         </div>
-        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
-        <div class="pipeline-node" id="node-encode">
-            <div class="node-icon">⚡</div>
-            <div class="node-label">wav1c WASM</div>
-            <div class="node-stat" id="stat-encode">—</div>
-        </div>
-        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
-        <div class="pipeline-node" id="node-mux">
-            <div class="node-icon">📦</div>
-            <div class="node-label">fMP4 Mux</div>
-            <div class="node-stat" id="stat-mux">—</div>
-        </div>
-        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
-        <div class="pipeline-node" id="node-decode">
-            <div class="node-icon">▶️</div>
-            <div class="node-label">MSE Decode</div>
-            <div class="node-stat" id="stat-decode">—</div>
+
+        <div class="tv" id="tv-output">
+            <div class="tv-body">
+                <div class="tv-bezel">
+                    <div class="tv-screen" id="screen-output">
+                        <canvas class="static-canvas" id="static-output" width="80" height="60"></canvas>
+                        <video id="preview" muted playsinline></video>
+                        <div class="warmup-line"></div>
+                        <div class="screen-osd" id="output-osd">NO SIGNAL</div>
+                    </div>
+                </div>
+                <div class="tv-chrome">
+                    <div class="tv-badge">
+                        <span class="badge-dot" style="background:#e53935"></span>
+                        <span class="badge-dot" style="background:#43a047"></span>
+                        <span class="badge-dot" style="background:#1e88e5"></span>
+                        <span class="badge-name">OUTPUT</span>
+                    </div>
+                    <span class="brand-text">wav1c</span>
+                </div>
+            </div>
+            <div class="tv-stand">
+                <div class="foot"></div>
+                <div class="foot"></div>
+            </div>
         </div>
     </section>
 
-    <section id="controls">
-        <button id="btn-start" disabled>Start Recording</button>
-        <button id="btn-stop" disabled>Stop</button>
-        <a id="btn-download" class="btn-download" style="display:none">Download MP4</a>
+    <canvas id="capture-canvas" style="display:none"></canvas>
 
-        <div class="control-group">
-            <label for="qp-slider">Quality (QP): <span id="qp-value">128</span></label>
-            <input type="range" id="qp-slider" min="0" max="255" value="128">
-        </div>
+    <div class="steps" id="steps">
+        <span class="step active" id="step-1">1. Press &#x23FB; on INPUT TV</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step" id="step-2">2. Press &#x25CF; REC on encoder</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step" id="step-3">3. Press &#x25A0; STOP &amp; &#x2B07; SAVE</span>
+    </div>
 
-        <div class="control-group">
-            <label for="keyint-select">Keyframe interval:</label>
-            <select id="keyint-select">
-                <option value="10">10</option>
-                <option value="25" selected>25</option>
-                <option value="30">30</option>
-                <option value="60">60</option>
-            </select>
+    <section class="telemetry">
+        <div class="telemetry-header">
+            <span class="telemetry-led"></span>
+            TELEMETRY
         </div>
-
-        <div class="control-group">
-            <label for="res-select">Resolution:</label>
-            <select id="res-select">
-                <option value="320x240" selected>320×240</option>
-                <option value="640x480">640×480</option>
-            </select>
+        <div class="telemetry-grid">
+            <div class="tele-cell">
+                <span class="tele-val" id="stats-fps">--</span>
+                <span class="tele-lbl">ENC FPS</span>
+            </div>
+            <div class="tele-cell">
+                <span class="tele-val" id="stats-framesize">--</span>
+                <span class="tele-lbl">AVG FRAME</span>
+            </div>
+            <div class="tele-cell">
+                <span class="tele-val" id="stats-total">--</span>
+                <span class="tele-lbl">TOTAL</span>
+            </div>
+            <div class="tele-cell">
+                <span class="tele-val" id="stats-bitrate">--</span>
+                <span class="tele-lbl">BITRATE</span>
+            </div>
+            <div class="tele-cell">
+                <span class="tele-val" id="stats-encodetime">--</span>
+                <span class="tele-lbl">ENC TIME</span>
+            </div>
         </div>
-    </section>
-
-    <section id="videos">
-        <div class="video-panel">
-            <h3>Raw Webcam Input</h3>
-            <video id="webcam" autoplay muted playsinline></video>
-            <canvas id="capture-canvas" style="display:none"></canvas>
+        <div class="chart-area">
+            <span class="chart-label">FRAME SIZE HISTOGRAM</span>
+            <canvas id="frame-chart" width="800" height="120"></canvas>
         </div>
-        <div class="video-panel">
-            <h3>AV1 Decoded Output</h3>
-            <video id="preview" muted playsinline></video>
-            <div id="preview-placeholder">Press "Start Recording" to begin</div>
-        </div>
-    </section>
-
-    <section id="stats">
-        <div class="stat-card">
-            <div class="stat-value" id="stats-fps">—</div>
-            <div class="stat-label">Encode FPS</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stats-framesize">—</div>
-            <div class="stat-label">Avg Frame Size</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stats-total">—</div>
-            <div class="stat-label">Total Encoded</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stats-bitrate">—</div>
-            <div class="stat-label">Bitrate</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stats-encodetime">—</div>
-            <div class="stat-label">Encode Time</div>
-        </div>
-    </section>
-
-    <section id="chart-section">
-        <h3>Frame Sizes</h3>
-        <canvas id="frame-chart" width="800" height="150"></canvas>
     </section>
 
     <footer>
         <p>152 KB of WASM. Zero dependencies. Built from the <a href="https://aomediacodec.github.io/av1-spec/">AV1 spec</a> in safe Rust.</p>
+        <p class="footer-link"><a href="https://github.com/rafaelcaricio/wav1c">github.com/rafaelcaricio/wav1c</a></p>
     </footer>
 
     <script type="module" src="app.js"></script>

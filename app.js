@@ -9,7 +9,8 @@ const previewVideo = $('preview');
 const canvas = $('capture-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-const btnStart = $('btn-start');
+const btnPower = $('btn-power');
+const btnRecord = $('btn-record');
 const btnStop = $('btn-stop');
 const btnDownload = $('btn-download');
 const qpSlider = $('qp-slider');
@@ -17,13 +18,31 @@ const qpValue = $('qp-value');
 const keyintSelect = $('keyint-select');
 const resSelect = $('res-select');
 
+const screenInput = $('screen-input');
+const screenOutput = $('screen-output');
+const staticInput = $('static-input');
+const staticOutput = $('static-output');
+const outputOsd = $('output-osd');
+
+const ledPower = $('led-power');
+const ledEncode = $('led-encode');
+const ledKey = $('led-key');
+const inputOsd = $('input-osd');
+
+const step1 = $('step-1');
+const step2 = $('step-2');
+const step3 = $('step-3');
+
 let encoder = null;
 let muxer = null;
 let mediaSource = null;
 let sourceBuffer = null;
 let recording = false;
+let powered = false;
 let webcamStream = null;
 let captureTimer = null;
+let staticTimers = [];
+let wasmLoaded = false;
 
 let frameCount = 0;
 let totalBytes = 0;
@@ -35,39 +54,129 @@ const TARGET_FPS = 15;
 const CHART_MAX_FRAMES = 120;
 
 qpSlider.addEventListener('input', () => { qpValue.textContent = qpSlider.value; });
-btnStart.addEventListener('click', startRecording);
+btnPower.addEventListener('click', togglePower);
+btnRecord.addEventListener('click', startRecording);
 btnStop.addEventListener('click', stopRecording);
 
-async function main() {
-    await init();
+function drawStatic(canvasEl) {
+    const ctx2 = canvasEl.getContext('2d');
+    const w = canvasEl.width;
+    const h = canvasEl.height;
+    const imageData = ctx2.createImageData(w, h);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        const v = Math.random() * 200 | 0;
+        data[i] = v;
+        data[i + 1] = v;
+        data[i + 2] = v;
+        data[i + 3] = 255;
+    }
+    ctx2.putImageData(imageData, 0, 0);
+}
 
-    const wasmResp = await fetch('wav1c_wasm_bg.wasm');
-    const wasmSize = (wasmResp.headers.get('content-length') || '155230');
-    document.querySelector('.wasm-size').textContent =
-        `${(parseInt(wasmSize) / 1024).toFixed(0)} KB of pure Rust WASM`;
+function startStatic(canvasEl) {
+    canvasEl.classList.add('active');
+    const timer = setInterval(() => drawStatic(canvasEl), 80);
+    staticTimers.push({ canvas: canvasEl, timer });
+    drawStatic(canvasEl);
+}
+
+function stopStatic(canvasEl) {
+    canvasEl.classList.remove('active');
+    const idx = staticTimers.findIndex(s => s.canvas === canvasEl);
+    if (idx >= 0) {
+        clearInterval(staticTimers[idx].timer);
+        staticTimers.splice(idx, 1);
+    }
+}
+
+function playWarmup(screenEl) {
+    return new Promise(resolve => {
+        screenEl.classList.add('warming-up');
+        setTimeout(() => {
+            screenEl.classList.remove('warming-up');
+            resolve();
+        }, 1300);
+    });
+}
+
+async function togglePower() {
+    if (powered) {
+        powerOff();
+        return;
+    }
+
+    btnPower.disabled = true;
+
+    if (!wasmLoaded) {
+        await init();
+        wasmLoaded = true;
+    }
 
     const mimeType = 'video/mp4; codecs="av01.0.13M.08"';
     if (typeof MediaSource === 'undefined' || !MediaSource.isTypeSupported(mimeType)) {
         showError('Your browser does not support AV1 playback via MSE. Try Chrome 94+ or Edge 94+.');
+        btnPower.disabled = false;
         return;
     }
+
+    startStatic(staticInput);
+    playWarmup(screenInput);
 
     try {
         webcamStream = await navigator.mediaDevices.getUserMedia({
             video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: TARGET_FPS } }
         });
-        webcamVideo.srcObject = webcamStream;
-        await webcamVideo.play();
-        btnStart.disabled = false;
-        setPipelineStat('webcam', `${webcamVideo.videoWidth}x${webcamVideo.videoHeight}`);
     } catch (e) {
         showError(`Webcam access denied: ${e.message}`);
+        stopStatic(staticInput);
+        btnPower.disabled = false;
+        return;
     }
+
+    webcamVideo.srcObject = webcamStream;
+    await webcamVideo.play();
+
+    await new Promise(r => setTimeout(r, 800));
+    stopStatic(staticInput);
+    inputOsd.classList.remove('visible');
+    webcamVideo.classList.add('visible');
+
+    powered = true;
+    btnPower.classList.add('on');
+    btnPower.disabled = false;
+    ledPower.classList.add('on-green');
+    btnRecord.disabled = false;
+
+    startStatic(staticOutput);
+    outputOsd.classList.add('visible');
+
+    setStep(2);
+}
+
+function powerOff() {
+    if (recording) stopRecording();
+
+    webcamVideo.classList.remove('visible');
+    if (webcamStream) {
+        webcamStream.getTracks().forEach(t => t.stop());
+        webcamStream = null;
+    }
+
+    stopStatic(staticInput);
+    stopStatic(staticOutput);
+    outputOsd.classList.remove('visible');
+    inputOsd.classList.add('visible');
+
+    setStep(1);
+    powered = false;
+    btnPower.classList.remove('on');
+    ledPower.classList.remove('on-green');
+    btnRecord.disabled = true;
 }
 
 function getResolution() {
-    const [w, h] = resSelect.value.split('x').map(Number);
-    return [w, h];
+    return resSelect.value.split('x').map(Number);
 }
 
 function startRecording() {
@@ -93,12 +202,12 @@ function startRecording() {
 
     setupMSE();
 
-    btnStart.disabled = true;
+    btnRecord.disabled = true;
     btnStop.disabled = false;
     btnDownload.style.display = 'none';
-    $('preview-placeholder').style.display = 'none';
-    previewVideo.style.display = '';
-    document.body.classList.add('recording');
+    ledEncode.classList.add('on-red');
+    document.body.classList.add('encoding');
+    setStep(3);
 
     lockControls(true);
 }
@@ -115,8 +224,16 @@ function setupMSE() {
 
         sourceBuffer.addEventListener('updateend', function onReady() {
             sourceBuffer.removeEventListener('updateend', onReady);
-            recording = true;
-            captureTimer = setInterval(captureFrame, 1000 / TARGET_FPS);
+
+            outputOsd.classList.remove('visible');
+            stopStatic(staticOutput);
+            playWarmup(screenOutput);
+
+            setTimeout(() => {
+                previewVideo.classList.add('visible');
+                recording = true;
+                captureTimer = setInterval(captureFrame, 1000 / TARGET_FPS);
+            }, 900);
         });
     });
 }
@@ -152,9 +269,6 @@ function captureFrame() {
 
     const { y, u, v } = rgbaToYuv420(imageData.data, w, h);
 
-    setPipelineStat('yuv', `${(w * h * 1.5 / 1024).toFixed(0)} KB`);
-    activateNode('yuv');
-
     const t0 = performance.now();
     const packet = encoder.encode_frame(y, u, v);
     const encodeMs = performance.now() - t0;
@@ -176,16 +290,12 @@ function captureFrame() {
     if (frameSizes.length > CHART_MAX_FRAMES) frameSizes.shift();
     if (encodeTimes.length > 30) encodeTimes.shift();
 
-    activateNode('webcam');
-    activateNode('encode');
-    activateNode('mux');
-    activateNode('decode');
-    setPipelineStat('webcam', `${w}x${h}`);
-    setPipelineStat('encode', `${(packet.byteLength / 1024).toFixed(1)} KB`);
-    setPipelineStat('mux', `frag #${frameCount}`);
-    setPipelineStat('decode', 'playing');
+    if (isKey) {
+        ledKey.classList.add('on-amber');
+        setTimeout(() => ledKey.classList.remove('on-amber'), 200);
+    }
 
-    updateStats(encodeMs);
+    updateStats();
     drawChart();
 }
 
@@ -196,7 +306,8 @@ function stopRecording() {
         captureTimer = null;
     }
 
-    document.body.classList.remove('recording');
+    document.body.classList.remove('encoding');
+    ledEncode.classList.remove('on-red');
 
     if (mediaSource && mediaSource.readyState === 'open') {
         try { mediaSource.endOfStream(); } catch (e) {}
@@ -213,10 +324,17 @@ function stopRecording() {
     btnDownload.style.display = '';
 
     btnStop.disabled = true;
-    btnStart.disabled = false;
+    btnRecord.disabled = false;
     lockControls(false);
+    setStep(2);
+}
 
-    document.querySelectorAll('.pipeline-node').forEach(n => n.classList.remove('active'));
+function setStep(n) {
+    [step1, step2, step3].forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i + 1 < n) el.classList.add('done');
+        else if (i + 1 === n) el.classList.add('active');
+    });
 }
 
 function lockControls(locked) {
@@ -242,31 +360,18 @@ function stripTemporalDelimiter(data) {
     return data;
 }
 
-function activateNode(name) {
-    const node = $(`node-${name}`);
-    if (!node) return;
-    node.classList.add('active');
-    clearTimeout(node._deactivate);
-    node._deactivate = setTimeout(() => node.classList.remove('active'), 200);
-}
-
-function setPipelineStat(name, text) {
-    const el = $(`stat-${name}`);
-    if (el) el.textContent = text;
-}
-
-function updateStats(encodeMs) {
+function updateStats() {
     const elapsed = (performance.now() - startTime) / 1000;
     const avgEncode = encodeTimes.reduce((a, b) => a + b, 0) / encodeTimes.length;
     const fps = frameCount / elapsed;
     const avgSize = totalBytes / frameCount;
     const bitrate = (totalBytes * 8) / elapsed;
 
-    $('stats-fps').textContent = `${fps.toFixed(1)}`;
+    $('stats-fps').textContent = fps.toFixed(1);
     $('stats-framesize').textContent = formatBytes(avgSize);
     $('stats-total').textContent = formatBytes(totalBytes);
     $('stats-bitrate').textContent = formatBitrate(bitrate);
-    $('stats-encodetime').textContent = `${avgEncode.toFixed(1)} ms`;
+    $('stats-encodetime').textContent = `${avgEncode.toFixed(1)}ms`;
 }
 
 function drawChart() {
@@ -282,7 +387,7 @@ function drawChart() {
     const W = rect.width;
     const H = rect.height;
 
-    cctx.fillStyle = '#0a0a14';
+    cctx.fillStyle = '#0a0a08';
     cctx.fillRect(0, 0, W, H);
 
     if (frameSizes.length === 0) return;
@@ -297,14 +402,16 @@ function drawChart() {
         const x = 10 + i * barWidth;
         const y = H - 10 - barH;
 
-        cctx.fillStyle = f.isKey ? '#ff5252' : '#00b4d8';
+        cctx.fillStyle = f.isKey ? '#ff5252' : '#ffb000';
+        cctx.globalAlpha = f.isKey ? 1 : 0.7;
         cctx.fillRect(x, y, barWidth - gap, barH);
     }
+    cctx.globalAlpha = 1;
 
-    cctx.fillStyle = '#6b6b8a';
-    cctx.font = '10px monospace';
+    cctx.fillStyle = '#5a5540';
+    cctx.font = '9px monospace';
     cctx.textAlign = 'right';
-    cctx.fillText(formatBytes(maxSize), W - 10, 16);
+    cctx.fillText(formatBytes(maxSize), W - 8, 14);
 }
 
 function formatBytes(bytes) {
@@ -326,4 +433,13 @@ function showError(msg) {
     document.querySelector('header').after(banner);
 }
 
-main();
+async function boot() {
+    const wasmResp = await fetch('wav1c_wasm_bg.wasm', { method: 'HEAD' });
+    const wasmSize = wasmResp.headers.get('content-length') || '155230';
+    const sizeEl = document.querySelector('.wasm-size');
+    if (sizeEl) {
+        sizeEl.textContent = `${(parseInt(wasmSize) / 1024).toFixed(0)} KB of pure Rust WASM`;
+    }
+}
+
+boot();
