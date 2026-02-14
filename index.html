@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wav1c — AV1 Encoding in Your Browser</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>wav1c</h1>
+        <p class="tagline">AV1 encoding in your browser. Pure safe Rust. Zero dependencies. No server.</p>
+        <p class="wasm-size"></p>
+    </header>
+
+    <section id="pipeline">
+        <div class="pipeline-node" id="node-webcam">
+            <div class="node-icon">📷</div>
+            <div class="node-label">Webcam</div>
+            <div class="node-stat" id="stat-webcam">—</div>
+        </div>
+        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
+        <div class="pipeline-node" id="node-yuv">
+            <div class="node-icon">🎨</div>
+            <div class="node-label">RGB → YUV420</div>
+            <div class="node-stat" id="stat-yuv">—</div>
+        </div>
+        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
+        <div class="pipeline-node" id="node-encode">
+            <div class="node-icon">⚡</div>
+            <div class="node-label">wav1c WASM</div>
+            <div class="node-stat" id="stat-encode">—</div>
+        </div>
+        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
+        <div class="pipeline-node" id="node-mux">
+            <div class="node-icon">📦</div>
+            <div class="node-label">fMP4 Mux</div>
+            <div class="node-stat" id="stat-mux">—</div>
+        </div>
+        <div class="pipeline-arrow"><span class="arrow-dot"></span></div>
+        <div class="pipeline-node" id="node-decode">
+            <div class="node-icon">▶️</div>
+            <div class="node-label">MSE Decode</div>
+            <div class="node-stat" id="stat-decode">—</div>
+        </div>
+    </section>
+
+    <section id="controls">
+        <button id="btn-start" disabled>Start Recording</button>
+        <button id="btn-stop" disabled>Stop</button>
+        <a id="btn-download" class="btn-download" style="display:none">Download MP4</a>
+
+        <div class="control-group">
+            <label for="qp-slider">Quality (QP): <span id="qp-value">128</span></label>
+            <input type="range" id="qp-slider" min="0" max="255" value="128">
+        </div>
+
+        <div class="control-group">
+            <label for="keyint-select">Keyframe interval:</label>
+            <select id="keyint-select">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="res-select">Resolution:</label>
+            <select id="res-select">
+                <option value="320x240" selected>320×240</option>
+                <option value="640x480">640×480</option>
+            </select>
+        </div>
+    </section>
+
+    <section id="videos">
+        <div class="video-panel">
+            <h3>Raw Webcam Input</h3>
+            <video id="webcam" autoplay muted playsinline></video>
+            <canvas id="capture-canvas" style="display:none"></canvas>
+        </div>
+        <div class="video-panel">
+            <h3>AV1 Decoded Output</h3>
+            <video id="preview" muted playsinline></video>
+            <div id="preview-placeholder">Press "Start Recording" to begin</div>
+        </div>
+    </section>
+
+    <section id="stats">
+        <div class="stat-card">
+            <div class="stat-value" id="stats-fps">—</div>
+            <div class="stat-label">Encode FPS</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stats-framesize">—</div>
+            <div class="stat-label">Avg Frame Size</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stats-total">—</div>
+            <div class="stat-label">Total Encoded</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stats-bitrate">—</div>
+            <div class="stat-label">Bitrate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stats-encodetime">—</div>
+            <div class="stat-label">Encode Time</div>
+        </div>
+    </section>
+
+    <section id="chart-section">
+        <h3>Frame Sizes</h3>
+        <canvas id="frame-chart" width="800" height="150"></canvas>
+    </section>
+
+    <footer>
+        <p>152 KB of WASM. Zero dependencies. Built from the <a href="https://aomediacodec.github.io/av1-spec/">AV1 spec</a> in safe Rust.</p>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
