@@ -43,6 +43,7 @@ let webcamStream = null;
 let captureTimer = null;
 let staticTimers = [];
 let wasmLoaded = false;
+let mseSupported = false;
 
 let frameCount = 0;
 let totalBytes = 0;
@@ -114,10 +115,10 @@ async function togglePower() {
     }
 
     const mimeType = 'video/mp4; codecs="av01.0.13M.08"';
-    if (typeof MediaSource === 'undefined' || !MediaSource.isTypeSupported(mimeType)) {
-        showError('Your browser does not support AV1 playback via MSE. Try Chrome 94+ or Edge 94+.');
-        btnPower.disabled = false;
-        return;
+    mseSupported = typeof MediaSource !== 'undefined' && MediaSource.isTypeSupported(mimeType);
+
+    if (!mseSupported) {
+        showInfo('Live preview unavailable (no AV1 MSE support). You can still record and download MP4 files — play them with VLC or a desktop browser.');
     }
 
     startStatic(staticInput);
@@ -200,8 +201,6 @@ function startRecording() {
     encodeTimes = [];
     startTime = performance.now();
 
-    setupMSE();
-
     btnRecord.disabled = true;
     btnStop.disabled = false;
     btnDownload.style.display = 'none';
@@ -210,6 +209,14 @@ function startRecording() {
     setStep(3);
 
     lockControls(true);
+
+    if (mseSupported) {
+        setupMSE();
+    } else {
+        outputOsd.textContent = 'ENCODE ONLY';
+        recording = true;
+        captureTimer = setInterval(captureFrame, 1000 / TARGET_FPS);
+    }
 }
 
 function setupMSE() {
@@ -277,10 +284,11 @@ function captureFrame() {
     const sampleData = stripTemporalDelimiter(packet);
     const fragment = muxer.addFrame(sampleData, isKey);
 
-    appendToSourceBuffer(fragment);
-
-    if (previewVideo.paused) {
-        previewVideo.play().catch(() => {});
+    if (mseSupported) {
+        appendToSourceBuffer(fragment);
+        if (previewVideo.paused) {
+            previewVideo.play().catch(() => {});
+        }
     }
 
     frameCount++;
@@ -310,7 +318,7 @@ function stopRecording() {
     document.body.classList.remove('encoding');
     ledEncode.classList.remove('on-red');
 
-    if (mediaSource && mediaSource.readyState === 'open') {
+    if (mseSupported && mediaSource && mediaSource.readyState === 'open') {
         try { mediaSource.endOfStream(); } catch (e) {}
     }
 
@@ -446,6 +454,13 @@ function formatBitrate(bps) {
 function showError(msg) {
     const banner = document.createElement('div');
     banner.className = 'error-banner';
+    banner.textContent = msg;
+    document.querySelector('header').after(banner);
+}
+
+function showInfo(msg) {
+    const banner = document.createElement('div');
+    banner.className = 'info-banner';
     banner.textContent = msg;
     document.querySelector('header').after(banner);
 }

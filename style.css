@@ -863,6 +863,21 @@ footer a:hover {
     font-family: var(--mono);
 }
 
+/* ─── Info Banner ─── */
+
+.info-banner {
+    background: rgba(255,176,0,0.08);
+    border: 1px solid rgba(255,176,0,0.3);
+    border-radius: 6px;
+    color: var(--amber);
+    padding: 0.8rem;
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto 1.5rem;
+    font-size: 0.85rem;
+    font-family: var(--mono);
+}
+
 /* ─── Responsive ─── */
 
 @media (max-width: 900px) {
@@ -881,5 +896,74 @@ footer a:hover {
 
     .telemetry-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    .signal-nodes {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .sig-wire {
+        width: 12px;
+    }
+
+    .steps {
+        flex-wrap: wrap;
+        gap: 4px 8px;
+    }
+
+    .step-arrow {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    html { font-size: 14px; }
+
+    body { padding: 1rem 0.5rem; }
+
+    .tv-screen {
+        width: calc(100vw - 80px);
+        max-width: 320px;
+    }
+
+    .encoder-box {
+        min-width: 120px;
+    }
+
+    .cable {
+        width: 12px;
+    }
+
+    .telemetry-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .signal-nodes {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sig-node {
+        min-width: 60px;
+        padding: 4px 6px;
+    }
+
+    .encoder-actions button,
+    .encoder-actions .btn-dl {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+    }
+
+    .power-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .step {
+        font-size: 0.6rem;
     }
 }
