@@ -295,6 +295,7 @@ function captureFrame() {
         setTimeout(() => ledKey.classList.remove('on-amber'), 200);
     }
 
+    updateSignalPath(w, h, packet.byteLength, encodeMs, fragment.byteLength);
     updateStats();
     drawChart();
 }
@@ -358,6 +359,22 @@ function stripTemporalDelimiter(data) {
         return data.subarray(2);
     }
     return data;
+}
+
+function updateSignalPath(w, h, packetSize, encodeMs, fragSize) {
+    const nodes = ['webcam', 'yuv', 'encode', 'mux', 'decode'];
+    nodes.forEach(id => {
+        const el = $(`sig-${id}`);
+        el.classList.add('active');
+        clearTimeout(el._deact);
+        el._deact = setTimeout(() => el.classList.remove('active'), 250);
+    });
+
+    $('sig-stat-webcam').textContent = `${w}x${h}`;
+    $('sig-stat-yuv').textContent = `${(w * h * 1.5 / 1024).toFixed(0)} KB`;
+    $('sig-stat-encode').textContent = `${(packetSize / 1024).toFixed(1)} KB`;
+    $('sig-stat-mux').textContent = `${(fragSize / 1024).toFixed(1)} KB`;
+    $('sig-stat-decode').textContent = `#${frameCount}`;
 }
 
 function updateStats() {

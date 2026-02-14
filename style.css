@@ -667,6 +667,117 @@ body.encoding .telemetry-led {
     margin-top: 4px;
 }
 
+/* ─── Signal Path ─── */
+
+.signal-path {
+    max-width: 750px;
+    margin: 0 auto 1rem;
+    background: #0c0c0a;
+    border: 1px solid #2a2820;
+    border-radius: 8px;
+    padding: 10px 16px 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.signal-header {
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--amber-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.signal-nodes {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.sig-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 6px 10px;
+    border: 1px solid #1a1a18;
+    border-radius: 4px;
+    background: #0a0a08;
+    min-width: 75px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sig-node.active {
+    border-color: var(--amber);
+    box-shadow: 0 0 8px rgba(255,176,0,0.15);
+}
+
+.sig-icon {
+    font-size: 0.9rem;
+    line-height: 1;
+    color: #4a4530;
+    transition: color 0.2s;
+}
+
+.sig-node.active .sig-icon {
+    color: var(--amber);
+}
+
+.sig-label {
+    font-family: var(--mono);
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #5a5540;
+    white-space: nowrap;
+}
+
+.sig-stat {
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    color: var(--amber);
+    opacity: 0.7;
+    min-height: 1em;
+    white-space: nowrap;
+}
+
+.sig-wire {
+    width: 24px;
+    height: 1px;
+    background: #2a2820;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.sig-dot {
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: var(--amber);
+    border-radius: 50%;
+    position: absolute;
+    top: -1.5px;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+body.encoding .sig-wire {
+    background: rgba(255,176,0,0.3);
+}
+
+body.encoding .sig-dot {
+    opacity: 1;
+    animation: sig-flow 0.5s linear infinite;
+}
+
+@keyframes sig-flow {
+    0% { left: 0; }
+    100% { left: 20px; }
+}
+
 /* ─── Steps Guide ─── */
 
 .steps {

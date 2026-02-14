@@ -133,6 +133,41 @@
         <span class="step" id="step-3">3. Press &#x25A0; STOP &amp; &#x2B07; SAVE</span>
     </div>
 
+    <section class="signal-path">
+        <div class="signal-header">SIGNAL PATH</div>
+        <div class="signal-nodes">
+            <div class="sig-node" id="sig-webcam">
+                <div class="sig-icon">&#x25C9;</div>
+                <div class="sig-label">WEBCAM</div>
+                <div class="sig-stat" id="sig-stat-webcam">&mdash;</div>
+            </div>
+            <div class="sig-wire"><span class="sig-dot"></span></div>
+            <div class="sig-node" id="sig-yuv">
+                <div class="sig-icon">&#x25A8;</div>
+                <div class="sig-label">RGB&rarr;YUV</div>
+                <div class="sig-stat" id="sig-stat-yuv">&mdash;</div>
+            </div>
+            <div class="sig-wire"><span class="sig-dot"></span></div>
+            <div class="sig-node" id="sig-encode">
+                <div class="sig-icon">&#x26A1;</div>
+                <div class="sig-label">wav1c AV1</div>
+                <div class="sig-stat" id="sig-stat-encode">&mdash;</div>
+            </div>
+            <div class="sig-wire"><span class="sig-dot"></span></div>
+            <div class="sig-node" id="sig-mux">
+                <div class="sig-icon">&#x25A3;</div>
+                <div class="sig-label">fMP4 MUX</div>
+                <div class="sig-stat" id="sig-stat-mux">&mdash;</div>
+            </div>
+            <div class="sig-wire"><span class="sig-dot"></span></div>
+            <div class="sig-node" id="sig-decode">
+                <div class="sig-icon">&#x25B6;</div>
+                <div class="sig-label">MSE PLAY</div>
+                <div class="sig-stat" id="sig-stat-decode">&mdash;</div>
+            </div>
+        </div>
+    </section>
+
     <section class="telemetry">
         <div class="telemetry-header">
             <span class="telemetry-led"></span>
